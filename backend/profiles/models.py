@@ -46,12 +46,19 @@ class Profile(models.Model):
     linkedin = models.URLField(blank=True, null=True, validators=[URLValidator()])
     youtube = models.URLField(blank=True, null=True, validators=[URLValidator()])
     website = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    twitter = models.URLField(blank=True, null=True, validators=[URLValidator()])
+    figma = models.URLField(blank=True, null=True, validators=[URLValidator()])
     others = models.JSONField(default=dict, blank=True)  # Format: {"label": "url"}
     about = models.TextField(blank=True, null=True)
     
     # New fields
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='payment_received')
     template = models.CharField(max_length=20, choices=TEMPLATE_CHOICES, default='template1')
+    
+    # Customization fields
+    background_color = models.CharField(max_length=100, default='#E6E0F2', help_text='Page background color (hex code or gradient)')
+    card_color = models.CharField(max_length=100, default='#FFFFFF', help_text='Card background color (hex code or gradient)')
+    button_color = models.CharField(max_length=100, default='#1E3A8A', help_text='Button color (hex code or gradient)')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

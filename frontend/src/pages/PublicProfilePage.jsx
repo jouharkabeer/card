@@ -6,13 +6,11 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
-import Template1 from '../components/templates/Template1'
-import Template2 from '../components/templates/Template2'
-import Template3 from '../components/templates/Template3'
-import Template4 from '../components/templates/Template4'
+import BusinessCard from '../components/templates/BusinessCard'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { toast } from 'react-toastify'
+import { FaEnvelope, FaPhone, FaWhatsapp } from 'react-icons/fa'
 
 const PublicProfilePage = () => {
   const { username } = useParams()
@@ -20,7 +18,9 @@ const PublicProfilePage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const profileRef = useRef(null)
+  const [showDetails, setShowDetails] = useState(false)
+  const cardRef = useRef(null)  // Ref for the card portion only
+  const profileRef = useRef(null)  // Keep for full details if needed
 
   useEffect(() => {
     setIsLoggedIn(authAPI.isAuthenticated())
@@ -72,14 +72,19 @@ const PublicProfilePage = () => {
   }
 
   const handleSaveAsPDF = async () => {
-    if (!profileRef.current) return
+    if (!cardRef.current) return
     
     try {
-      toast.info('Generating PDF...')
-      const canvas = await html2canvas(profileRef.current, {
+      toast.info('Generating PDF card...')
+      // Get background color for canvas (check if gradient)
+      const bgColor = profile?.background_color || '#E6E0F2'
+      const canvasBg = bgColor.includes('gradient') ? '#E6E0F2' : bgColor
+      
+      const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: canvasBg,
+        logging: false,
       })
       
       const imgData = canvas.toDataURL('image/png')
@@ -88,17 +93,26 @@ const PublicProfilePage = () => {
       const pdfHeight = pdf.internal.pageSize.getHeight()
       const imgWidth = canvas.width
       const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const ratio = Math.min((pdfWidth - 40) / imgWidth, (pdfHeight - 40) / imgHeight)
       const imgFinalWidth = imgWidth * ratio
       const imgFinalHeight = imgHeight * ratio
       
-      // Center the image
+      // Center the card on the page
       const xOffset = (pdfWidth - imgFinalWidth) / 2
       const yOffset = (pdfHeight - imgFinalHeight) / 2
       
+      // Add subtle border effect
+      pdf.setDrawColor(200, 200, 200)
+      pdf.setFillColor(255, 255, 255)
+      if (typeof pdf.roundedRect === 'function') {
+        pdf.roundedRect(xOffset - 2, yOffset - 2, imgFinalWidth + 4, imgFinalHeight + 4, 3, 3, 'FD')
+      } else {
+        pdf.rect(xOffset - 2, yOffset - 2, imgFinalWidth + 4, imgFinalHeight + 4, 'FD')
+      }
+      
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgFinalWidth, imgFinalHeight)
       pdf.save(`${profile?.name || profile?.username || 'profile'}-card.pdf`)
-      toast.success('PDF downloaded successfully!')
+      toast.success('Card saved as PDF!')
     } catch (err) {
       console.error('PDF generation error:', err)
       toast.error('Failed to generate PDF')
@@ -146,21 +160,8 @@ View full profile: ${window.location.href}
     }
   }
 
-  const renderTemplate = () => {
-    const template = profile?.template || 'template1'
-    
-    switch (template) {
-      case 'template1':
-        return <div ref={profileRef}><Template1 profile={profile} /></div>
-      case 'template2':
-        return <div ref={profileRef}><Template2 profile={profile} /></div>
-      case 'template3':
-        return <div ref={profileRef}><Template3 profile={profile} /></div>
-      case 'template4':
-        return <div ref={profileRef}><Template4 profile={profile} /></div>
-      default:
-        return <div ref={profileRef}><Template1 profile={profile} /></div>
-    }
+  const handleViewMore = () => {
+    setShowDetails(!showDetails)
   }
 
   return (
@@ -177,15 +178,104 @@ View full profile: ${window.location.href}
         <meta property="og:url" content={window.location.href} />
         <meta property="og:type" content="profile" />
       </Helmet>
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div 
+        className="min-h-screen flex flex-col"
+        style={
+          profile?.background_color?.includes('gradient') 
+            ? { background: profile.background_color }
+            : { backgroundColor: profile?.background_color || '#E6E0F2' }
+        }
+      >
         <Navbar />
         <main className="flex-grow">
-          {renderTemplate()}
-          
+          {/* Card Section - Only this portion will be saved as PDF */}
+          <div ref={cardRef}>
+            <BusinessCard 
+              profile={profile} 
+              onViewMore={handleViewMore}
+              showDetails={false}
+            />
+          </div>
+
+          {/* Expanded Details Section */}
+          {showDetails && (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8" ref={profileRef}>
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Contact Information</h2>
+                <div className="space-y-2 sm:space-y-3">
+                  {profile?.email && (
+                    <div className="flex items-center gap-3">
+                      <FaEnvelope className="text-[#41287b]" />
+                      <a href={`mailto:${profile.email}`} className="text-gray-700 hover:text-[#41287b]">
+                        {profile.email}
+                      </a>
+                    </div>
+                  )}
+                  {profile?.phone && (
+                    <div className="flex items-center gap-3">
+                      <FaPhone className="text-[#41287b]" />
+                      <a href={`tel:${profile.phone}`} className="text-gray-700 hover:text-[#41287b]">
+                        {profile.phone}
+                      </a>
+                    </div>
+                  )}
+                  {profile?.whatsapp && (
+                    <div className="flex items-center gap-3">
+                      <FaWhatsapp className="text-green-600" />
+                      <a 
+                        href={`https://wa.me/${profile.whatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-700 hover:text-green-600"
+                      >
+                        {profile.whatsapp}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {profile?.gallery_urls && profile.gallery_urls.length > 0 && (
+                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Gallery</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {profile.gallery_urls.map((url, index) => (
+                      <img
+                        key={index}
+                        src={url}
+                        alt={`Gallery ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile?.others && Object.keys(profile.others).length > 0 && (
+                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Additional Links</h2>
+                  <div className="space-y-2 sm:space-y-3">
+                    {Object.entries(profile.others).map(([label, url]) => (
+                      <a
+                        key={label}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-gray-700 hover:text-[#41287b]"
+                      >
+                        {label}: {url}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <button
                   type="button"
                   onClick={handleSaveAsPDF}
@@ -194,7 +284,7 @@ View full profile: ${window.location.href}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Save Details (PDF)
+                  Save Card
                 </button>
                 <button
                   type="button"
@@ -204,7 +294,7 @@ View full profile: ${window.location.href}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
-                  Share Details
+                  Share Card
                 </button>
               </div>
               

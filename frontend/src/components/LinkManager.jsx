@@ -103,38 +103,39 @@ const LinkManager = ({ value = {}, onChange }) => {
       </label>
       <div className="space-y-3">
         {links.map(([label, url], index) => (
-          <div key={index} className="flex items-center space-x-2">
+          <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
             <input
               type="text"
               placeholder="Label"
               value={label}
               onChange={(e) => updateLink(index, 'label', e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b]"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b] text-sm sm:text-base"
             />
             <input
               type="url"
               placeholder="URL"
               value={url}
               onChange={(e) => updateLink(index, 'url', e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b]"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b] text-sm sm:text-base"
             />
             <button
               type="button"
               onClick={() => removeLink(index)}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-md"
+              className="p-2 text-red-600 hover:bg-red-50 rounded-md flex-shrink-0"
+              aria-label="Remove link"
             >
               <FaTrash />
             </button>
           </div>
         ))}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
           <input
             type="text"
             placeholder="New label"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b] text-sm sm:text-base"
           />
           <input
             type="url"
@@ -142,12 +143,13 @@ const LinkManager = ({ value = {}, onChange }) => {
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#41287b] focus:border-[#41287b] text-sm sm:text-base"
           />
           <button
             type="button"
             onClick={addLink}
-            className="p-2 bg-[#41287b] text-white rounded-md hover:bg-[#41287b]/90"
+            className="p-2 bg-[#41287b] text-white rounded-md hover:bg-[#41287b]/90 flex-shrink-0 flex items-center justify-center"
+            aria-label="Add link"
           >
             <FaPlus />
           </button>

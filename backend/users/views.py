@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from .serializers import UserRegistrationSerializer
 
 
-@api_view(['POST'])
+@api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
 def register(request):
     """Register a new user."""
@@ -30,7 +30,7 @@ def register(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
 def login(request):
     """Login user and return JWT tokens."""

@@ -1,6 +1,11 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api-card.lsofito.com/api'
+// API Configuration - Easy switch between local and production
+// Change USE_LOCAL to false for production, or true for local development
+const USE_LOCAL = false  // Set to false for production
+const Api1 = 'https://api-card.lsofito.com/api'  // Production
+const Api2 = 'http://localhost:8000/api'        // Local development
+const API_URL = USE_LOCAL ? Api2 : (import.meta.env.VITE_API_URL || Api1)
 
 // Create axios instance
 const api = axios.create({
@@ -116,6 +121,7 @@ export const profileAPI = {
     const formData = new FormData()
     
     // Process 'others' field - filter out empty values and ensure it's a valid object
+    // Always send 'others' field, even if empty
     if (data.others && typeof data.others === 'object') {
       const filteredOthers = {}
       Object.entries(data.others).forEach(([key, value]) => {
@@ -123,9 +129,10 @@ export const profileAPI = {
           filteredOthers[key.trim()] = value.trim()
         }
       })
-      // Only append if there are valid entries, otherwise send empty object
-      formData.append('others', JSON.stringify(Object.keys(filteredOthers).length > 0 ? filteredOthers : {}))
-    } else if (data.others === null || data.others === undefined) {
+      // Always append 'others' as JSON string, even if empty
+      formData.append('others', JSON.stringify(filteredOthers))
+    } else {
+      // If others is null/undefined or not an object, send empty object
       formData.append('others', JSON.stringify({}))
     }
     

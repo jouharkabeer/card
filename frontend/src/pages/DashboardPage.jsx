@@ -8,10 +8,10 @@ import { getCurrentUser } from '../utils/auth'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProfileCard from '../components/ProfileCard'
+import BusinessCard from '../components/templates/BusinessCard'
 import ImageUpload from '../components/ImageUpload'
 import LinkManager from '../components/LinkManager'
 import GalleryUpload from '../components/GalleryUpload'
-import TemplateSelector from '../components/TemplateSelector'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 
@@ -30,10 +30,15 @@ const DashboardPage = () => {
     linkedin: '',
     youtube: '',
     website: '',
+    twitter: '',
+    figma: '',
     others: {},
     about: '',
     template: 'template1',
     gallery: [],
+    background_color: '#E6E0F2',
+    card_color: '#FFFFFF',
+    button_color: '#1E3A8A',
   })
   const previewRef = useRef(null)
   const [loading, setLoading] = useState(true)
@@ -58,10 +63,15 @@ const DashboardPage = () => {
           linkedin: data.linkedin || '',
           youtube: data.youtube || '',
           website: data.website || '',
+          twitter: data.twitter || '',
+          figma: data.figma || '',
           others: data.others || {},
           about: data.about || '',
           template: data.template || 'template1',
           gallery: data.gallery_urls || [],
+          background_color: data.background_color || '#E6E0F2',
+          card_color: data.card_color || '#FFFFFF',
+          button_color: data.button_color || '#1E3A8A',
         })
       } catch (err) {
         setError('Failed to load profile')
@@ -101,13 +111,6 @@ const DashboardPage = () => {
     })
   }
 
-  const handleTemplateChange = (template) => {
-    setFormData({
-      ...formData,
-      template,
-    })
-    toast.success('Template updated! Preview will update after saving.')
-  }
 
   const handleGalleryChange = (galleryFiles) => {
     // galleryFiles should be an array of File objects
@@ -124,10 +127,18 @@ const DashboardPage = () => {
     }
 
     try {
-      toast.info('Generating PDF...')
-      const canvas = await html2canvas(previewRef.current, {
+      toast.info('Generating PDF card...')
+      // Find the card element within preview - the BusinessCard component
+      const cardElement = previewRef.current.querySelector('.bg-white.rounded-t-3xl') || previewRef.current.querySelector('.flex.justify-center')
+      
+      // Get background color for canvas (check if gradient)
+      const bgColor = formData.background_color || profile?.background_color || '#E6E0F2'
+      const canvasBg = bgColor.includes('gradient') ? '#E6E0F2' : bgColor
+      
+      const canvas = await html2canvas(cardElement || previewRef.current, {
         scale: 2,
         useCORS: true,
+        backgroundColor: canvasBg,
         logging: false,
       })
 
@@ -175,7 +186,7 @@ const DashboardPage = () => {
       
       const fileName = `${formData.name || 'profile'}-card.pdf`
       pdf.save(fileName)
-      toast.success('PDF card downloaded successfully!')
+      toast.success('Card saved as PDF!')
     } catch (err) {
       console.error('PDF generation error:', err)
       toast.error('Failed to generate PDF')
@@ -199,6 +210,8 @@ ${formData.instagram ? `Instagram: ${formData.instagram}` : ''}
 ${formData.linkedin ? `LinkedIn: ${formData.linkedin}` : ''}
 ${formData.youtube ? `YouTube: ${formData.youtube}` : ''}
 ${formData.website ? `Website: ${formData.website}` : ''}
+${formData.twitter ? `Twitter: ${formData.twitter}` : ''}
+${formData.figma ? `Figma: ${formData.figma}` : ''}
 ${Object.entries(formData.others || {}).map(([label, url]) => `${label}: ${url}`).join('\n')}
 
 Profile URL: ${window.location.origin}/${user?.username}
@@ -266,6 +279,9 @@ Profile URL: ${window.location.origin}/${user?.username}
         others: updatedProfile.others || {},
         gallery: updatedProfile.gallery_urls || [],
         template: updatedProfile.template || formData.template,
+        background_color: updatedProfile.background_color || formData.background_color || '#E6E0F2',
+        card_color: updatedProfile.card_color || formData.card_color || '#FFFFFF',
+        button_color: updatedProfile.button_color || formData.button_color || '#1E3A8A',
       })
     } catch (err) {
       console.error('Update error:', err.response?.data)
@@ -453,15 +469,107 @@ Profile URL: ${window.location.origin}/${user?.username}
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Twitter URL
+                  </label>
+                  <input
+                    type="url"
+                    name="twitter"
+                    value={formData.twitter}
+                    onChange={handleChange}
+                    placeholder="https://twitter.com/username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Figma URL
+                  </label>
+                  <input
+                    type="url"
+                    name="figma"
+                    value={formData.figma}
+                    onChange={handleChange}
+                    placeholder="https://figma.com/@username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
                 <LinkManager
                   value={formData.others}
                   onChange={handleOthersChange}
                 />
 
-                <TemplateSelector
-                  value={formData.template}
-                  onChange={handleTemplateChange}
-                />
+                {/* Color Customization */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Page Background Color (supports gradient)
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.background_color?.match(/^#?[0-9A-F]{6}$/i) ? formData.background_color : '#E6E0F2'}
+                        onChange={(e) => setFormData({ ...formData, background_color: e.target.value })}
+                        className="w-16 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.background_color || '#E6E0F2'}
+                        onChange={(e) => setFormData({ ...formData, background_color: e.target.value })}
+                        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#41287b] text-sm"
+                        placeholder="#E6E0F2 or linear-gradient(...)"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Example gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%)</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Card Background Color (supports gradient)
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.card_color?.match(/^#?[0-9A-F]{6}$/i) ? formData.card_color : '#FFFFFF'}
+                        onChange={(e) => setFormData({ ...formData, card_color: e.target.value })}
+                        className="w-16 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.card_color || '#FFFFFF'}
+                        onChange={(e) => setFormData({ ...formData, card_color: e.target.value })}
+                        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#41287b] text-sm"
+                        placeholder="#FFFFFF or linear-gradient(...)"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Example gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Button Color (supports gradient)
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.button_color?.match(/^#?[0-9A-F]{6}$/i) ? formData.button_color : '#1E3A8A'}
+                        onChange={(e) => setFormData({ ...formData, button_color: e.target.value })}
+                        className="w-16 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.button_color || '#1E3A8A'}
+                        onChange={(e) => setFormData({ ...formData, button_color: e.target.value })}
+                        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#41287b] text-sm"
+                        placeholder="#1E3A8A or linear-gradient(...)"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Example gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%)</p>
+                  </div>
+                </div>
 
                 <GalleryUpload
                   value={formData.gallery}
@@ -479,7 +587,7 @@ Profile URL: ${window.location.origin}/${user?.username}
               </form>
 
               {/* Action Buttons */}
-              <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={handleSaveAsPDF}
@@ -508,7 +616,7 @@ Profile URL: ${window.location.origin}/${user?.username}
               <h2 className="text-xl font-semibold text-gray-800 mb-6">Preview</h2>
               <div className="sticky top-8" ref={previewRef}>
                 {/* Show preview with merged formData and profile */}
-                <ProfileCard 
+                <BusinessCard 
                   profile={{
                     ...profile,
                     name: formData.name || profile?.name,
@@ -520,15 +628,19 @@ Profile URL: ${window.location.origin}/${user?.username}
                     linkedin: formData.linkedin || profile?.linkedin,
                     youtube: formData.youtube || profile?.youtube,
                     website: formData.website || profile?.website,
+                    twitter: formData.twitter || profile?.twitter,
+                    figma: formData.figma || profile?.figma,
                     about: formData.about || profile?.about,
                     others: formData.others || profile?.others || {},
                     template: formData.template || profile?.template || 'template1',
-                    gallery: formData.gallery || profile?.gallery_urls || profile?.gallery || [],
-                    gallery_urls: formData.gallery || profile?.gallery_urls || profile?.gallery || [],
+                    gallery_urls: formData.gallery || profile?.gallery_urls || [],
+                    background_color: formData.background_color || profile?.background_color || '#E6E0F2',
+                    card_color: formData.card_color || profile?.card_color || '#FFFFFF',
+                    button_color: formData.button_color || profile?.button_color || '#1E3A8A',
                     profile_image_url: formData.profile_image instanceof File 
                       ? URL.createObjectURL(formData.profile_image)
                       : formData.profile_image || profile?.profile_image_url,
-                  }} 
+                  }}
                 />
                 {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === 'development' && (

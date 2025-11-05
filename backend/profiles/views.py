@@ -52,15 +52,19 @@ class MyProfileView(generics.RetrieveUpdateAPIView):
         # Parse JSON string fields from FormData
         data = request.data.copy()
         
-        # Handle 'others' field
+        # Handle 'others' field - ensure it's properly parsed from JSON string
         if 'others' in data:
             if isinstance(data['others'], str):
                 try:
-                    data['others'] = json.loads(data['others'])
-                except json.JSONDecodeError:
+                    parsed = json.loads(data['others'])
+                    data['others'] = parsed if isinstance(parsed, dict) else {}
+                except (json.JSONDecodeError, TypeError):
                     data['others'] = {}  # Default to empty dict if parsing fails
             elif not isinstance(data['others'], dict):
                 data['others'] = {}
+        else:
+            # If 'others' is not in data, ensure it's set to empty dict
+            data['others'] = {}
         
         # Handle gallery images - remove old ones and add new ones
         # Gallery images are sent as separate files with keys like 'gallery_0', 'gallery_1', etc.

@@ -44,13 +44,22 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'config.middleware.CorsPreflightMiddleware',  # Handle OPTIONS before CommonMiddleware
+    'corsheaders.middleware.CorsMiddleware',  # Must be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Disable APPEND_SLASH to prevent redirects on API endpoints
+# This prevents Django from redirecting /api/login to /api/login/
+APPEND_SLASH = False
+
+# Ensure CORS middleware handles OPTIONS requests properly
+# This prevents 301 redirects on preflight requests
+CORS_PREFLIGHT_MAX_AGE = 86400
 
 ROOT_URLCONF = 'config.urls'
 
@@ -191,6 +200,29 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow all methods for CORS
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allow all headers for CORS
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # Additional CORS settings for production
 CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'  # Only for development

@@ -33,8 +33,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'profile_image', 'profile_image_url', 'name',
             'designation', 'email', 'phone', 'whatsapp', 'instagram',
-            'linkedin', 'youtube', 'website', 'others', 'about',
-            'status', 'template', 'gallery_urls'
+            'linkedin', 'youtube', 'website', 'twitter', 'figma', 'others', 'about',
+            'status', 'template', 'gallery_urls', 'background_color', 'card_color', 'button_color'
         )
         read_only_fields = ('username', 'status')  # Status is admin-only
 
@@ -65,8 +65,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             'profile_image', 'name', 'designation', 'email', 'phone',
-            'whatsapp', 'instagram', 'linkedin', 'youtube', 'website', 'others', 'about',
-            'template'
+            'whatsapp', 'instagram', 'linkedin', 'youtube', 'website', 'twitter', 'figma', 'others', 'about',
+            'template', 'background_color', 'card_color', 'button_color'
         )
 
     def validate_name(self, value):
