@@ -22,8 +22,8 @@ const GalleryUpload = ({ value = [], onChange, maxImages = 3 }) => {
         toast.error(`${file.name} is not an image file`)
         return false
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error(`${file.name} is too large (max 5MB)`)
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error(`${file.name} is too large (max 10MB)`)
         return false
       }
       return true

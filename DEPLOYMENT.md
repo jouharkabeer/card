@@ -7,6 +7,26 @@
 
 ## Backend Deployment
 
+### Important: Update Nginx Configuration
+
+Your current Nginx configuration needs to be updated to allow file uploads. Here's what to add:
+
+**Key additions needed:**
+1. `client_max_body_size 10M;` - Allows 10MB file uploads
+2. `client_body_buffer_size 128k;` - Buffer size for uploads
+3. Proxy timeouts for large file uploads
+4. Media and static file serving locations
+
+**See `nginx-api-card.lsofito.com.conf` file in project root for complete configuration.**
+
+Steps to update:
+1. Backup your current config: `sudo cp /etc/nginx/sites-available/api-card.lsofito.com /etc/nginx/sites-available/api-card.lsofito.com.backup`
+2. Update the config file with the new settings (keep Certbot SSL lines)
+3. Test: `sudo nginx -t`
+4. Reload: `sudo systemctl reload nginx`
+
+## Backend Deployment (Detailed)
+
 ### 1. Environment Setup
 
 Create a `.env` file in the `backend/` directory (copy from `backend/.env.example`):
@@ -80,6 +100,10 @@ server {
     ssl_certificate /path/to/ssl/certificate.crt;
     ssl_certificate_key /path/to/ssl/private.key;
 
+    # Allow larger file uploads (10MB)
+    client_max_body_size 10M;
+    client_body_buffer_size 128k;
+
     # Security headers
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -92,6 +116,11 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Increase timeouts for large file uploads
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
     }
 
     # Media files (IMPORTANT: Update path to your actual backend directory)
